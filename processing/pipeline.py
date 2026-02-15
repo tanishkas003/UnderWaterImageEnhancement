@@ -6,7 +6,7 @@ import numpy as np
 
 from .wcid import WCID
 from .dcp import DCP
-from .dct import DCTEnhancer
+from .dct import DCT
 
 from .contrast_maximization import contrast_maximization
 from .homomorphic_filtering import homomorphic_filter
@@ -24,7 +24,7 @@ class EnhancementPipeline:
 
         self.wcid = WCID()
         self.dcp = DCP()
-        self.dct = DCTEnhancer()
+        self.dct = DCT()
 
     def process(self, image, mode="standard"):
 
