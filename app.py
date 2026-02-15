@@ -37,6 +37,8 @@ def home():
 # ===============================
 @app.route("/enhance", methods=["POST"])
 def enhance_image():
+    print("FILES RECEIVED:", request.files)
+    print("FORM RECEIVED:", request.form)
     try:
         if 'image' not in request.files:
             return jsonify({"error": "No image uploaded"}), 400
