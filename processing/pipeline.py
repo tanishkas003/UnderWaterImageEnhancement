@@ -5,7 +5,7 @@ from .sharpen import Sharpen
 
 from .wcid import WCID
 from .dcp import DCP
-from .dct import DCTEnhancer
+from .dct import DCT
 
 class EnhancementPipeline:
 
@@ -18,7 +18,7 @@ class EnhancementPipeline:
 
         self.wcid = WCID()
         self.dcp = DCP()
-        self.dct = DCTEnhancer()
+        self.dct = DCT()
 
     def process(self, image, mode="standard"):
 
