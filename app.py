@@ -25,7 +25,7 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB limit
 
 
 # ===============================
-# Homepage Route (Frontend)
+# Homepage Route
 # ===============================
 @app.route("/")
 def home():
@@ -39,54 +39,80 @@ def home():
 def enhance_image():
     print("FILES RECEIVED:", request.files)
     print("FORM RECEIVED:", request.form)
-    if 'image' not in request.files:
+
+    if "image" not in request.files:
         return jsonify({"error": "No image uploaded"}), 400
 
-    file = request.files['image']
+    file = request.files["image"]
 
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
 
-    # Unique filename (avoid overwrite issues)
-    unique_id = str(uuid.uuid4())
-    filename = unique_id + "_" + file.filename
+    try:
+        # Unique filename (avoid overwrite issues)
+        unique_id = str(uuid.uuid4())
+        filename = unique_id + "_" + file.filename
 
-    gamma = float(request.form.get("gamma", 1.2))
-    clip_limit = float(request.form.get("clip_limit", 3.0))
+        gamma = float(request.form.get("gamma", 1.2))
+        clip_limit = float(request.form.get("clip_limit", 3.0))
 
-    upload_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    file.save(upload_path)
+        upload_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file.save(upload_path)
 
-    # Read Image
-    image = cv2.imread(upload_path)
+        # Read Image
+        image = cv2.imread(upload_path)
 
-    if image is None:
-        return jsonify({"error": "Invalid image format"}), 400
+        if image is None:
+            return jsonify({"error": "Invalid image format"}), 400
 
-    # Process Image
-    mode = request.form.get("mode", "standard")
+        # Process Image
+        mode = request.form.get("mode", "standard")
 
-    pipeline = EnhancementPipeline(gamma=gamma, clip_limit=clip_limit)
-    enhanced = pipeline.process(image, mode=mode)
+        pipeline = EnhancementPipeline(gamma=gamma, clip_limit=clip_limit)
+        enhanced = pipeline.process(image, mode=mode)
 
+        if enhanced is None:
+            return jsonify({"error": "Image processing failed"}), 500
 
-    output_filename = "enhanced_" + filename
-    output_path = os.path.join(app.config["PROCESSED_FOLDER"], output_filename)
-    cv2.imwrite(output_path, enhanced)
+        # Ensure same size as original (important for PSNR)
+        if enhanced.shape[:2] != image.shape[:2]:
+            enhanced = cv2.resize(
+                enhanced,
+                (image.shape[1], image.shape[0])
+            )
 
-    # Metrics
-    psnr = calculate_psnr(image, enhanced)
-    entropy = calculate_entropy(enhanced)
+        # Save enhanced image AFTER resizing
+        output_filename = "enhanced_" + filename
+        output_path = os.path.join(
+            app.config["PROCESSED_FOLDER"],
+            output_filename
+        )
+        cv2.imwrite(output_path, enhanced)
 
-    return jsonify({
-        "message": "Image processed successfully",
-        "psnr": round(float(psnr), 2),
-        "entropy": round(float(entropy), 2),
-        "original_image_url": url_for("uploaded_file", filename=filename),
-        "enhanced_image_url": url_for("processed_file", filename=output_filename),
-        "download_url": url_for("download_file", filename=output_filename)
-    })
+        # ===============================
+        # Metrics
+        # ===============================
+        psnr = calculate_psnr(image, enhanced)
+        entropy = calculate_entropy(enhanced)
 
+        return jsonify({
+            "message": "Image processed successfully",
+            "psnr": round(float(psnr), 2),
+            "entropy": round(float(entropy), 2),
+            "original_image_url": url_for(
+                "uploaded_file", filename=filename
+            ),
+            "enhanced_image_url": url_for(
+                "processed_file", filename=output_filename
+            ),
+            "download_url": url_for(
+                "download_file", filename=output_filename
+            )
+        })
+
+    except Exception as e:
+        print("ERROR:", str(e))
+        return jsonify({"error": "Internal server error"}), 500
 
 
 # ===============================
