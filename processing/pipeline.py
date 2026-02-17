@@ -8,6 +8,11 @@ from .wcid import WCID
 from .dcp import DCP
 from .dct import DCT
 
+from .contrast_maximization import contrast_maximization
+from .homomorphic_filtering import homomorphic_filter
+from .guided_filtering import guided_filter_enhancement
+from .hist_equalization import histogram_equalization
+
 class EnhancementPipeline:
 
     def __init__(self, gamma=1.2, clip_limit=3.0):
@@ -37,6 +42,18 @@ class EnhancementPipeline:
 
         elif mode == "dct":
             image = self.dct.apply(image)
+
+        elif mode == "contrast":
+            image = contrast_maximization(image)
+
+        elif mode == "homomorphic":
+            image = homomorphic_filter(image)
+
+        elif mode == "guided":
+            image = guided_filter_enhancement(image)
+
+        elif mode == "histogram":
+            image = histogram_equalization(image)
 
         return image
 
