@@ -4,29 +4,39 @@ from .gamma import GammaCorrection
 from .sharpen import Sharpen
 import numpy as np
 
+from .wcid import WCID
+from .dcp import DCP
+from .dct import DCT
+
 class EnhancementPipeline:
 
     def __init__(self, gamma=1.2, clip_limit=3.0):
+
         self.white_balance = WhiteBalance()
         self.clahe = CLAHEEnhancer(clip_limit)
         self.gamma = GammaCorrection(gamma)
         self.sharpen = Sharpen()
 
-    def process(self, image):
+        self.wcid = WCID()
+        self.dcp = DCP()
+        self.dct = DCT()
 
-        image = image.astype("uint8")
+    def process(self, image, mode="standard"):
 
-        image = self.white_balance.apply(image)
-        image = np.clip(image, 0, 255).astype("uint8")
+        if mode == "standard":
+            image = self.white_balance.apply(image)
+            image = self.clahe.apply(image)
+            image = self.gamma.apply(image)
+            image = self.sharpen.apply(image)
 
-        image = self.clahe.apply(image)
-        image = np.clip(image, 0, 255).astype("uint8")
+        elif mode == "wcid":
+            image = self.wcid.apply(image)
 
-        image = self.gamma.apply(image)
-        image = np.clip(image, 0, 255).astype("uint8")
+        elif mode == "dcp":
+            image = self.dcp.apply(image)
 
-        image = self.sharpen.apply(image)
-        image = np.clip(image, 0, 255).astype("uint8")
+        elif mode == "dct":
+            image = self.dct.apply(image)
 
         return image
 
