@@ -4,6 +4,7 @@ from .gamma import GammaCorrection
 from .sharpen import Sharpen
 from .SimpleSeaThru import StableSeaThru
 import numpy as np
+import cv2
 
 from .wcid import WCID
 from .dcp import DCP
@@ -50,6 +51,7 @@ class EnhancementPipeline:
 
         elif mode == "homomorphic":
             image = homomorphic_filter(image)
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
         elif mode == "guided":
             image = guided_filter_enhancement(image)
